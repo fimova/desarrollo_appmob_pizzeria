@@ -7,15 +7,15 @@ fun leerCantidadPositiva(mensaje: String): Int? {
         val entrada = readlnOrNull() ?: return null
 
         try {
-            val valor = entrada.trim().toInt()
+            val cantidad = entrada.trim().toInt()
 
-            if (valor <= 0) {
-                println("Error: la cantidad debe ser mayor a 0.")
-            } else {
-                return valor
+            if (cantidad in 1..100) { // uso de rango
+                return cantidad
             }
+
+            println("Error: ingresa una cantidad entre 1 y 100.")
         } catch (error: NumberFormatException) {
-            println("Error: debe ingresar un número entero.")
+            println("Error: debes ingresar un número entero.")
         }
     }
 }

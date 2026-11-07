@@ -1,12 +1,14 @@
 package utils
 
+private val formatoTelefonoChile = Regex("9[0-9]{8}")
+private val formatoEmail = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+
 // telefono: solo dígitos y formato seleccionado
 fun validarTelefono(entrada: String): String? {
     val telefono = entrada.trim()
-    val formato = Regex("9[0-9]{8}")
 
-    return if (formato.matches(telefono)) {
-        "+56 9 ${telefono.substring(1, 5)} ${telefono.substring(5, 9)}"
+    return if (formatoTelefonoChile.matches(telefono)) {
+        "+56 (9) ${telefono.substring(1, 5)}-${telefono.substring(5, 9)}"
     } else {
         null
     }
@@ -15,9 +17,8 @@ fun validarTelefono(entrada: String): String? {
 // email: debe tener @ y un punto después del @
 fun validarEmail(entrada: String): String? {
     val email = entrada.trim()
-    val formato = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
 
-    return if (formato.matches(email)) {
+    return if (formatoEmail.matches(email)) {
         email
     } else {
         null

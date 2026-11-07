@@ -4,6 +4,37 @@ import model.Cliente
 import utils.validarEmail
 import utils.validarTelefono
 
+private fun leerTelefonoValido(): String? {
+    while (true) {
+        print("Teléfono (9 dígitos, comenzando con 9): ")
+        val entrada = readlnOrNull() ?: return null
+
+        val telefono = validarTelefono(entrada)
+
+        if (telefono != null) {
+            return telefono
+        }
+
+        println("Teléfono inválido. Ingresa los 9 dígitos nuevamente.")
+    }
+}
+
+private fun leerEmailValido(): String? {
+    while (true) {
+        print("Correo electrónico: ")
+        val entrada = readlnOrNull() ?: return null
+
+        val email = validarEmail(entrada)
+
+        if (email != null) {
+            return email
+        }
+
+        println("Email inválido. Usa el formato nombre@dominio.com e inténtalo nuevamente.")
+    }
+}
+
+// datos del cliente
 fun registrarCliente(): Cliente? {
     print("Nombre cliente: ")
     val nombreEntrada = readlnOrNull() ?: return null
@@ -12,25 +43,8 @@ fun registrarCliente(): Cliente? {
         "Sin nombre"
     }
 
-    print("Teléfono (9 dígitos, comenzando con 9): ")
-    val telefonoEntrada = readlnOrNull() ?: return null
-    val telefonoValidado = validarTelefono(telefonoEntrada)
-    val telefono = if (telefonoValidado == null) {
-        println("Teléfono inválido. Se usará 'No informado'.")
-        "No informado"
-    } else {
-        telefonoValidado
-    }
-
-    print("Correo electrónico: ")
-    val emailEntrada = readlnOrNull() ?: return null
-    val emailValidado = validarEmail(emailEntrada)
-    val email = if (emailValidado == null) {
-        println("Email inválido. Se usará 'correo@invalido.com'.")
-        "correo@invalido.com"
-    } else {
-        emailValidado
-    }
+    val telefono = leerTelefonoValido() ?: return null
+    val email = leerEmailValido() ?: return null
 
     print("Dirección: ")
     val direccionEntrada = readlnOrNull() ?: return null

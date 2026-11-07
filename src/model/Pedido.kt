@@ -3,12 +3,15 @@ package model
 import utils.TASA_DESCUENTO
 import utils.TASA_IVA
 import utils.UMBRAL_PIZZAS_DESCUENTO
+import java.time.LocalDate
 
 class Pedido(
     val id: Long,
     val cliente: Cliente,
     val items: List<ItemPedido>,
-    val notas: String? = null
+    val notas: String? = null,
+    val fechaPedido: LocalDate = LocalDate.now(),
+    val promocion: Promocion? = null
 ) {
 
     var estado: EstadoPedido = EstadoPedido.EN_PREPARACION
@@ -33,7 +36,16 @@ class Pedido(
             cantidadTotal += item.cantidad
         }
 
-        val descuento = if (cantidadTotal > UMBRAL_PIZZAS_DESCUENTO) {
+        // descuento del 10% se aplica si pide sobre 3 pizza o si está dentro de
+        // la fecha de promoción
+        // NO se duplica el descuento
+        val promocionVigente =
+            promocion?.estaVigente(fechaPedido) == true
+
+        val descuentoAplica =
+            cantidadTotal > UMBRAL_PIZZAS_DESCUENTO || promocionVigente
+
+        val descuento = if (descuentoAplica) {
             subtotal * TASA_DESCUENTO
         } else {
             0.0
