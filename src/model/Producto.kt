@@ -1,5 +1,7 @@
 package model
 
+import utils.formatearCLP
+
 class Producto (
     val nombre: String,
     val precio: Double,
@@ -12,6 +14,6 @@ class Producto (
         val ingredientesTexto = ingredientes.entries.joinToString { (nombre, cant) ->
             "$nombre x $cant"
         }
-        return "Producto: $nombre | Precio: $$precio | Ingredientes: $ingredientesTexto"
+        return "Producto: $nombre | Precio: $${formatearCLP(precio)} | Ingredientes: $ingredientesTexto"
     }
 }

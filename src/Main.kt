@@ -1,19 +1,22 @@
-import model.Cliente
 import model.EstadoPedido
 import model.ItemPedido
 import model.Pedido
 import model.Producto
 import model.Repartidor
-import utils.imprimirInventario
-import utils.leerCantidadPositiva
-import utils.validarEmail
-import utils.validarTelefono
+import service.buscarRepartidorDisponible
+import service.verificarYActualizarInventario
+import ui.imprimirInventario
+import ui.imprimirReportePedidos
+import ui.imprimirResumenPedido
+import ui.leerCantidadPositiva
+import ui.mostrarResultadoInventario
+import ui.registrarCliente
+import ui.seleccionarProducto
 import utils.validarZona
-import utils.verificarYActualizarInventario
 
 // ============================================
 // Asignatura: Desarrollo App Móviles I (PMY2201)
-// Semana 2 - Formativa: Aplicando utilidades de Kotlin
+// Semana 3 - Sumativa 1
 // ============================================
 
 fun main() {
@@ -43,52 +46,62 @@ fun main() {
     val pepperoni = Producto(
         "Pepperoni",
         6500.0,
-        ingredientes = mapOf("masa" to 1, "queso" to 1, "salsa" to 1, "pepperoni" to 2)
+        ingredientes = mapOf(
+            "masa" to 1,
+            "queso" to 1,
+            "salsa" to 1,
+            "pepperoni" to 2
+        )
     )
 
     val hawaiana = Producto(
         "Hawaiana",
         6000.0,
-        ingredientes = mapOf("masa" to 1, "queso" to 1, "salsa" to 1, "piña" to 2)
+        ingredientes = mapOf(
+            "masa" to 1,
+            "queso" to 1,
+            "salsa" to 1,
+            "piña" to 2
+        )
     )
 
     val menu = listOf(margarita, pepperoni, hawaiana)
 
-    // REPARTIDORES (listOf + find)
+    // REPARTIDORES (listOf + búsqueda por zona y cercanía)
+    // un número menor en prioridadCercania representa mayor cercanía
     val repartidores = listOf(
-        Repartidor("Carlos", "+569 11111111", "carlos@pizza.com", "Centro"),
-        Repartidor("Ana", "+569 22222222", "ana@pizza.com", "Norte"),
-        Repartidor("Luis", "+569 33333333", "luis@pizza.com", "Sur")
+        Repartidor("Carlos", "+56 9 1111 1111", "carlos@pizza.com", "Centro", 2),
+        Repartidor("Camila", "+56 9 2222 2222", "camila@pizza.com", "Centro", 1),
+        Repartidor("Ana", "+56 9 3333 3333", "ana@pizza.com", "Norte", 1),
+        Repartidor("Luis", "+56 9 4444 4444", "luis@pizza.com", "Sur", 1)
     )
 
-    val pedidosDia = mutableListOf<Pedido>() // se convertirá en array
+    // array de pedidos que se actualiza al confirmar cada pedido
+    var pedidosDia: Array<Pedido> = emptyArray()
+
     var siguienteId = 1001L
     var seguir = true
 
-    while (seguir) {
+    // se le da un nombre al loop (pedidoLoop) con una etiqueta
+    pedidoLoop@ while (seguir) {
         println("\n=== Nuevo Pedido ===")
 
         // datos del cliente
-        print("Nombre cliente: ")
-        val nombreEntrada = readlnOrNull() ?: return
-        val nombre = nombreEntrada.trim().ifBlank {
-            println("Nombre vacío. Se usará 'Sin nombre'.")
-            "Sin nombre"
+        val cliente = registrarCliente()
+        if (cliente == null) {
+            break@pedidoLoop
         }
 
-        print("Teléfono (9 dígitos, comenzando con 9): ")
-        val telefonoEntrada = readlnOrNull() ?: return
-        val telefono = validarTelefono(telefonoEntrada)
+        print("Notas del pedido (opcional): ")
+        val notasEntrada = readlnOrNull()
+        if (notasEntrada == null) {
+            break@pedidoLoop
+        }
 
-        print("Correo electrónico: ")
-        val emailEntrada = readlnOrNull() ?: return
-        val email = validarEmail(emailEntrada)
-
-        print("Dirección: ")
-        val direccionEntrada = readlnOrNull() ?: return
-        val direccion = direccionEntrada.trim().ifBlank {
-            println("Dirección vacía. Se usará 'Sin dirección'.")
-            "Sin dirección"
+        val notas = if (notasEntrada.trim().isBlank()) {
+            null
+        } else {
+            notasEntrada.trim()
         }
 
         print("Zona (Centro/Norte/Sur) o 'Sucursal central' para retirar: ")
@@ -97,7 +110,11 @@ fun main() {
         var zonaIngresadaCorrectamente = false
 
         while (!zonaIngresadaCorrectamente) {
-            val zonaEntrada = readlnOrNull() ?: return
+            val zonaEntrada = readlnOrNull()
+            if (zonaEntrada == null) {
+                break@pedidoLoop
+            }
+
             val zonaValidada = validarZona(zonaEntrada)
 
             when {
@@ -107,100 +124,131 @@ fun main() {
                 }
 
                 zonaEntrada.trim().equals("sucursal", ignoreCase = true) ||
-                        zonaEntrada.trim().equals("sucursal central", ignoreCase = true) -> {
+                        zonaEntrada.trim().equals(
+                            "sucursal central",
+                            ignoreCase = true
+                        ) -> {
                     zona = null
                     zonaIngresadaCorrectamente = true
                     println("El pedido será para retirar en sucursal central.")
                 }
 
                 else -> {
-                    println("Zona inválida. Ingresa Centro, Norte, Sur o Sucursal central.")
+                    println(
+                        "Zona inválida. Ingresa Centro, Norte, Sur " +
+                                "o Sucursal central."
+                    )
                     print("Zona: ")
                 }
             }
         }
 
-        val cliente = Cliente(nombre, telefono, email, direccion)
-
-        // mostrar menú
-        println("\n--- Menú ---")
-        menu.forEachIndexed { idx, producto ->
-            println("${idx + 1}. ${producto.detallarProducto()}")
-        }
-
         // elegir pizza válida
-        var productoElegido: Producto? = null
-
-        while (productoElegido == null) {
-            print("Elija una pizza (1-${menu.size}): ")
-            val opcionEntrada = readlnOrNull() ?: return
-            val opcion = opcionEntrada.trim().toIntOrNull()
-
-            if (opcion == null || opcion !in 1..menu.size) {
-                println("Opción inválida. Ingrese un número del 1 al ${menu.size}.")
-            } else {
-                productoElegido = menu[opcion - 1]
-            }
+        val productoSeleccionado = seleccionarProducto(menu)
+        if (productoSeleccionado == null) {
+            break@pedidoLoop
         }
 
-        // comprobó que no es null
-        val productoSeleccionado = productoElegido ?: return
-
-        val cantidad = leerCantidadPositiva(
+        val cantidadLeida = leerCantidadPositiva(
             "¿Cuántas pizzas ${productoSeleccionado.nombre} desea? "
-        ) ?: return
+        )
+        if (cantidadLeida == null) {
+            break@pedidoLoop
+        }
 
+        val cantidad = cantidadLeida
         val items = listOf(ItemPedido(productoSeleccionado, cantidad))
 
         val pedido = Pedido(
             id = siguienteId,
             cliente = cliente,
             items = items,
-            estado = EstadoPedido.EN_PREPARACION
+            notas = notas
         )
 
-        siguienteId++
-
         // verificar inventario con when y map
-        val inventarioOk = verificarYActualizarInventario(pedido, inventario)
+        // esta función se llama una sola vez porque también puede descontar el stock
+        val resultadoInventario =
+            verificarYActualizarInventario(pedido, inventario)
 
-        if (!inventarioOk) {
+        mostrarResultadoInventario(resultadoInventario)
+
+        if (!resultadoInventario.inventarioActualizado) {
             println("Pedido rechazado por falta de ingredientes.")
             println("Inventario actual:")
             imprimirInventario(inventario)
         } else {
             // 1. asignar repartidor
             // 2. transición estado: preparación -> listo
-            pedido.cambiarEstado(EstadoPedido.LISTO)
-            println("Pedido cocinado y empacado.")
+            val cambioAListo = pedido.cambiarEstado(EstadoPedido.LISTO)
 
-            val zonaEntrega = zona
+            if (cambioAListo) {
+                println(
+                    "Estado del pedido #${pedido.id}: " +
+                            "${EstadoPedido.EN_PREPARACION.etiqueta} → " +
+                            "${pedido.estado.etiqueta}"
+                )
+                println("Pedido cocinado y empacado.")
 
-            if (zonaEntrega == null) {
-                pedido.repartidor = null // usuario decide retirar en sucursal
-                println("Pedido listo para retirar en sucursal central.")
-            } else {
-                val repartidor = repartidores.find {
-                    it.zona.equals(zonaEntrega, ignoreCase = true)
-                }
+                val zonaEntrega = zona
 
-                // este if solo ocurre si no hubiera un repartidor para esa zona
-                // validación si por ejemplo se eliminara un repartidor
-                if (repartidor == null) {
-                    pedido.repartidor = null
-                    println("No hay repartidor disponible para la zona $zonaEntrega.")
-                    println("El pedido quedará listo para retirar en sucursal central.")
+                if (zonaEntrega == null) {
+                    println("Pedido listo para retirar en sucursal central.")
                 } else {
-                    pedido.repartidor = repartidor // caso normal
+                    val repartidor =
+                        buscarRepartidorDisponible(zonaEntrega, repartidores)
 
-                    // 3. transición estado: listo -> en camino (repartidor toma el pedido)
-                    repartidor.entregarPedido(pedido) // dentro cambia a EN_CAMINO
-                    println("${repartidor.nombre} ha salido hacia la dirección del cliente.")
+                    // este caso ocurre si no hay un repartidor disponible para esa zona
+                    if (repartidor == null) {
+                        println(
+                            "No hay repartidor disponible para la zona $zonaEntrega."
+                        )
+                        println(
+                            "El pedido quedará listo para retirar en sucursal central."
+                        )
+                    } else {
+                        val asignacionExitosa = repartidor.asignarPedido(pedido)
+
+                        if (!asignacionExitosa) {
+                            println(
+                                "No se pudo asignar a ${repartidor.nombre}, " +
+                                        "no está disponible."
+                            )
+                            println(
+                                "El pedido quedará listo para retirar en sucursal central."
+                            )
+                        } else {
+                            // 3. transición estado: listo -> en camino
+                            // el repartidor toma el pedido
+                            val estadoAnterior = pedido.estado
+                            val entregaIniciada =
+                                repartidor.entregarPedido(pedido)
+
+                            if (entregaIniciada) {
+                                println(
+                                    "Estado del pedido #${pedido.id}: " +
+                                            "${estadoAnterior.etiqueta} → " +
+                                            "${pedido.estado.etiqueta}"
+                                )
+                                println(
+                                    "${repartidor.nombre} ha salido hacia " +
+                                            "la dirección del cliente."
+                                )
+                            } else {
+                                println("No se pudo iniciar el despacho del pedido.")
+                            }
+                        }
+                    }
                 }
+            } else {
+                println("No se pudo cambiar el estado del pedido a Listo.")
             }
 
-            pedido.mostrarResumen()
-            pedidosDia.add(pedido)
+            imprimirResumenPedido(pedido)
+
+            // agrega el pedido al array y avanza el id
+            pedidosDia = pedidosDia + pedido
+            siguienteId++
 
             println("\nInventario actualizado:")
             imprimirInventario(inventario)
@@ -212,37 +260,8 @@ fun main() {
         seguir = respuesta?.trim()?.equals("s", ignoreCase = true) == true
     }
 
-    // ====== RESUMEN (array + for + filter) ======
-    println("\n=== Reporte de pedidos del día ===")
-
-    val pedidosArray: Array<Pedido> = pedidosDia.toTypedArray()
-
-    for (pedido in pedidosArray) {
-        val totales = pedido.calcularTotal()
-
-        var cantidadTotalPizzas = 0
-        for (item in pedido.items) {
-            cantidadTotalPizzas += item.cantidad
-        }
-
-        println(
-            "Cliente: ${pedido.cliente.nombre} | " +
-                    "Pizza(s): $cantidadTotalPizzas | " +
-                    "Total: $${totales.totalFinal} | " +
-                    "Estado: ${pedido.estado}"
-        )
-    }
-
-    val completados = pedidosDia.filter {
-        it.estado == EstadoPedido.LISTO || it.estado == EstadoPedido.EN_CAMINO
-    }
-
-    val pendientes = pedidosDia.filter {
-        it.estado == EstadoPedido.EN_PREPARACION
-    }
-
-    println("Pedidos completados: ${completados.size}")
-    println("Pedidos pendientes:  ${pendientes.size}")
+    // resumen (array + for + filter)
+    imprimirReportePedidos(pedidosDia)
 
     println()
     println("=== Gracias por usar el sistema de La Pizzería ===")
