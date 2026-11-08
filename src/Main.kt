@@ -1,8 +1,10 @@
 import model.EstadoPedido
 import model.ItemPedido
 import model.Pedido
-import model.Producto
 import model.Repartidor
+import model.CatalogoProductos
+import model.Cliente
+import model.PromocionesDemo
 import service.buscarRepartidorDisponible
 import service.verificarYActualizarInventario
 import ui.imprimirInventario
@@ -13,6 +15,8 @@ import ui.mostrarResultadoInventario
 import ui.registrarCliente
 import ui.seleccionarProducto
 import utils.validarZona
+import ui.imprimirPromocionablesDelPedido
+import ui.imprimirResumenFinal
 
 // ============================================
 // Asignatura: Desarrollo App Móviles I (PMY2201)
@@ -37,35 +41,8 @@ fun main() {
     imprimirInventario(inventario)
 
     // PRODUCTOS (pizzas) como Producto
-    val margarita = Producto(
-        "Margarita",
-        5000.0,
-        ingredientes = mapOf("masa" to 1, "queso" to 2, "salsa" to 1)
-    )
+    val menu = CatalogoProductos.productos
 
-    val pepperoni = Producto(
-        "Pepperoni",
-        6500.0,
-        ingredientes = mapOf(
-            "masa" to 1,
-            "queso" to 1,
-            "salsa" to 1,
-            "pepperoni" to 2
-        )
-    )
-
-    val hawaiana = Producto(
-        "Hawaiana",
-        6000.0,
-        ingredientes = mapOf(
-            "masa" to 1,
-            "queso" to 1,
-            "salsa" to 1,
-            "piña" to 2
-        )
-    )
-
-    val menu = listOf(margarita, pepperoni, hawaiana)
 
     // REPARTIDORES (listOf + búsqueda por zona y cercanía)
     // un número menor en prioridadCercania representa mayor cercanía
@@ -82,12 +59,14 @@ fun main() {
     var siguienteId = 1001L
     var seguir = true
 
+    val clientesRegistrados = mutableSetOf<Cliente>()
+
     // se le da un nombre al loop (pedidoLoop) con una etiqueta
     pedidoLoop@ while (seguir) {
         println("\n=== Nuevo Pedido ===")
 
         // datos del cliente
-        val cliente = registrarCliente()
+        val cliente = registrarCliente(clientesRegistrados)
         if (cliente == null) {
             break@pedidoLoop
         }
@@ -163,8 +142,12 @@ fun main() {
             id = siguienteId,
             cliente = cliente,
             items = items,
-            notas = notas
+            notas = notas,
+            promocion = PromocionesDemo.promocionActual
         )
+
+        // indica si hay productos con promoción en el pedido
+        imprimirPromocionablesDelPedido(pedido)
 
         // verificar inventario con when y map
         // esta función se llama una sola vez porque también puede descontar el stock
@@ -262,6 +245,10 @@ fun main() {
 
     // resumen (array + for + filter)
     imprimirReportePedidos(pedidosDia)
+
+    // resumen final: combinación de pedidos, desestructuración,
+    // promocionables, igualdad e inspección por reflection
+    imprimirResumenFinal(pedidosDia, clientesRegistrados)
 
     println()
     println("=== Gracias por usar el sistema de La Pizzería ===")

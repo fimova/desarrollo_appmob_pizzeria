@@ -29,8 +29,22 @@ fun imprimirResumenPedido(pedido: Pedido) {
 
     println("-------------------------------")
     println("Subtotal: ${formatearCLP(total.subtotal)}")
+    val motivoDescuento = when {
+        total.descuentoPorCantidad && total.descuentoPorPromocion ->
+            "por cantidad y fecha de promoción vigente - se aplica una sola vez"
+
+        total.descuentoPorCantidad ->
+            "por cantidad"
+
+        total.descuentoPorPromocion ->
+            "por fecha de promoción vigente"
+
+        else ->
+            "no aplica"
+    }
+
     println(
-        "Descuento ($porcentajeDescuento%): " +
+        "Descuento ($porcentajeDescuento%, $motivoDescuento): " +
                 formatearCLP(total.descuento)
     )
     println("IVA ($porcentajeIva%): ${formatearCLP(total.impuestos)}")

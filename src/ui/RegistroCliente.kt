@@ -35,7 +35,7 @@ private fun leerEmailValido(): String? {
 }
 
 // datos del cliente
-fun registrarCliente(): Cliente? {
+fun registrarCliente(clientesRegistrados: MutableSet<Cliente>): Cliente? {
     print("Nombre cliente: ")
     val nombreEntrada = readlnOrNull() ?: return null
     val nombre = nombreEntrada.trim().ifBlank {
@@ -43,8 +43,20 @@ fun registrarCliente(): Cliente? {
         "Sin nombre"
     }
 
-    val telefono = leerTelefonoValido() ?: return null
     val email = leerEmailValido() ?: return null
+
+    // revisar si el cliente ya existe antes de pedir teléfono y dirección
+    val clienteExistente = clientesRegistrados.firstOrNull { clienteRegistrado ->
+        clienteRegistrado.nombre == nombre &&
+                clienteRegistrado.email == email
+    }
+
+    if (clienteExistente != null) {
+        println("El cliente ya está registrado. Se usarán sus datos guardados.")
+        return clienteExistente
+    }
+
+    val telefono = leerTelefonoValido() ?: return null
 
     print("Dirección: ")
     val direccionEntrada = readlnOrNull() ?: return null
@@ -53,5 +65,15 @@ fun registrarCliente(): Cliente? {
         "Sin dirección"
     }
 
-    return Cliente(nombre, telefono, email, direccion)
+    val nuevoCliente = Cliente(nombre, telefono, email, direccion)
+
+    // también usa equals() y hashCode() para evitar duplicados
+    if (!clientesRegistrados.add(nuevoCliente)) {
+        val clienteRegistrado = clientesRegistrados.first { it == nuevoCliente }
+        println("El cliente ya está registrado. Se usarán sus datos guardados.")
+        return clienteRegistrado
+    }
+
+    println("Cliente registrado.")
+    return nuevoCliente
 }

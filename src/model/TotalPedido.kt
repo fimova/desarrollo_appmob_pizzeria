@@ -4,5 +4,7 @@ class TotalPedido(
     val subtotal: Double,
     val descuento: Double,
     val impuestos: Double,
-    val totalFinal: Double
+    val totalFinal: Double,
+    val descuentoPorCantidad: Boolean,
+    val descuentoPorPromocion: Boolean
 )
