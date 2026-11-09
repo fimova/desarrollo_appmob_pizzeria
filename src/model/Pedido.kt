@@ -31,42 +31,46 @@ class Pedido(
 
     operator fun component2(): List<Producto> = productos
 
-    operator fun component3(): Double = calcularTotal().totalFinal
+    operator fun component3(): TotalPedido = calcularTotal()
 
     // == MÉTODOS ==
 
-    // cáculo del total, junto con iva y también descuento si hay
+    // cálculo del total, junto con IVA y descuento si corresponde
     fun calcularTotal(): TotalPedido {
         var subtotal = 0.0
-        var cantidadTotal = 0
+        var subtotalPromocionable = 0.0
+        var cantidadPizzas = 0
+        var incluyeProductoPromocionable = false
 
         for (item in items) {
-            subtotal += item.producto.precio * item.cantidad
-            cantidadTotal += item.cantidad
+            val subtotalItem = item.producto.precio * item.cantidad
+            subtotal += subtotalItem
+
+            if (item.producto.categoria == CategoriaProducto.PIZZA) {
+                cantidadPizzas += item.cantidad
+            }
+
+            if (item.producto.esPromocionable()) {
+                subtotalPromocionable += subtotalItem
+                incluyeProductoPromocionable = true
+            }
         }
 
-        // el descuento se aplica si se supera el umbral de cantidad o si hay
-        // una promoción vigente para al menos un producto promocionable
-        // si se cumplen ambas condiciones, se aplica una sola vez
+        // si se cumplen ambas condiciones, se aplica un solo descuento
         val descuentoPorCantidad =
-            cantidadTotal > UMBRAL_PIZZAS_DESCUENTO
-
-        val incluyeProductoPromocionable =
-            items.any { item -> item.producto.esPromocionable() }
+            cantidadPizzas > UMBRAL_PIZZAS_DESCUENTO
 
         val descuentoPorPromocion =
             incluyeProductoPromocionable &&
                     (promocion?.estaVigente(fechaPedido) == true)
 
-        val descuentoAplica =
-            descuentoPorCantidad || descuentoPorPromocion
-
-        val descuento = if (descuentoAplica) {
-            subtotal * TASA_DESCUENTO
-        } else {
-            0.0
+        val baseDescuento = when {
+            descuentoPorCantidad -> subtotal
+            descuentoPorPromocion -> subtotalPromocionable
+            else -> 0.0
         }
 
+        val descuento = baseDescuento * TASA_DESCUENTO
         val neto = subtotal - descuento
         val impuestos = neto * TASA_IVA
         val totalFinal = neto + impuestos

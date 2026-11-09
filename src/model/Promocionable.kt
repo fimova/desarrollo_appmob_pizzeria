@@ -1,5 +1,5 @@
 package model
 
 @Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME) // permite que la anotación esté disponible busque con reflection
+@Retention(AnnotationRetention.RUNTIME) // permite buscar la anotación en tiempo de ejecución con reflection
 annotation class Promocionable

@@ -5,7 +5,6 @@ import model.Cliente
 import model.Pedido
 import model.Producto
 import service.obtenerProductosPromocionables
-import utils.TASA_DESCUENTO
 import utils.formatearCLP
 import utils.inspeccionarClase
 
@@ -41,10 +40,7 @@ private fun imprimirPedidoCombinado(pedidosDia: Array<Pedido>) {
     val pedidoCombinado = primerPedido + segundoPedido
 
     // desestructuración del Pedido usando sus component1, component2 y component3
-    val (clienteCombinado, productosCombinados, totalFinalCombinado) =
-        pedidoCombinado
-
-    val total = pedidoCombinado.calcularTotal()
+    val (clienteCombinado, productosCombinados, total) = pedidoCombinado
 
     println("Pedidos combinados: #${primerPedido.id} + #${segundoPedido.id}")
     println("Cliente extraído del pedido: ${clienteCombinado.nombre}")
@@ -58,31 +54,17 @@ private fun imprimirPedidoCombinado(pedidosDia: Array<Pedido>) {
         println("- ${item.producto.nombre} x${item.cantidad}")
     }
 
-    val motivoDescuento = when {
-        total.descuentoPorCantidad && total.descuentoPorPromocion ->
-            "por cantidad y fecha de promoción vigente; se aplica una sola vez"
-
-        total.descuentoPorCantidad ->
-            "por cantidad"
-
-        total.descuentoPorPromocion ->
-            "por fecha de promoción vigente"
-
-        else ->
-            "no aplica"
-    }
-
-    val porcentajeDescuento = (TASA_DESCUENTO * 100).toInt()
-
     println("Subtotal combinado: ${formatearCLP(total.subtotal)}")
     println(
-        "Descuento combinado ($porcentajeDescuento%, $motivoDescuento): " +
-                formatearCLP(total.descuento)
+        formatearLineaDescuento(
+            total = total,
+            etiqueta = "Descuento combinado"
+        )
     )
     println("IVA: ${formatearCLP(total.impuestos)}")
     println(
         "Total combinado (extraído por desestructuración): " +
-                formatearCLP(totalFinalCombinado)
+                formatearCLP(total.totalFinal)
     )
 }
 
@@ -114,6 +96,7 @@ private fun imprimirClienteDesestructurado(
 ) {
     println("\n--- Cliente desestructurado ---")
 
+    // toma el primer cliente registrado
     val cliente = pedidosDia.firstOrNull()?.cliente
         ?: clientesRegistrados.firstOrNull()
 
@@ -148,7 +131,7 @@ private fun imprimirValidacionIgualdad() {
     // productos con el mismo nombre y categoría se consideran iguales
     val p1 = Producto("Margarita", 5000.0, emptyMap())
     val p2 = Producto("Margarita", 9999.0, emptyMap())
-    println("¿Productos iguales (Margarita, misma categoría)? ${p1 == p2}")
+    println("¿Dos productos con igual nombre y categoría son iguales? ${p1 == p2}")
 
     // clientes con el mismo nombre y correo se consideran duplicados
     val c1 = Cliente("Juan", "912345678", "juan@mail.com", "Calle 1")

@@ -30,7 +30,7 @@ class Repartidor(
 
     // entregar el pedido, cambiando estado a EN_CAMINO
     fun entregarPedido(pedido: Pedido): Boolean {
-        if (pedido.repartidor != this) {
+        if (pedido.repartidor !== this) {
             return false
         }
 

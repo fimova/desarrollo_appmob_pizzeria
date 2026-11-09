@@ -2,14 +2,12 @@ package ui
 
 import model.EstadoPedido
 import model.Pedido
-import utils.TASA_DESCUENTO
 import utils.TASA_IVA
 import utils.formatearCLP
 
 // resumen total del pedido
 fun imprimirResumenPedido(pedido: Pedido) {
     val total = pedido.calcularTotal()
-    val porcentajeDescuento = (TASA_DESCUENTO * 100).toInt()
     val porcentajeIva = (TASA_IVA * 100).toInt()
 
     println("----- RESUMEN DEL PEDIDO -----")
@@ -29,24 +27,7 @@ fun imprimirResumenPedido(pedido: Pedido) {
 
     println("-------------------------------")
     println("Subtotal: ${formatearCLP(total.subtotal)}")
-    val motivoDescuento = when {
-        total.descuentoPorCantidad && total.descuentoPorPromocion ->
-            "por cantidad y fecha de promoción vigente - se aplica una sola vez"
-
-        total.descuentoPorCantidad ->
-            "por cantidad"
-
-        total.descuentoPorPromocion ->
-            "por fecha de promoción vigente"
-
-        else ->
-            "no aplica"
-    }
-
-    println(
-        "Descuento ($porcentajeDescuento%, $motivoDescuento): " +
-                formatearCLP(total.descuento)
-    )
+    println(formatearLineaDescuento(total))
     println("IVA ($porcentajeIva%): ${formatearCLP(total.impuestos)}")
     println("Total: ${formatearCLP(total.totalFinal)}")
     println("Notas: ${pedido.notas ?: "Sin notas"}")
@@ -76,7 +57,7 @@ fun imprimirReportePedidos(pedidosDia: Array<Pedido>) {
 
         println(
             "Cliente: ${pedido.cliente.nombre} | " +
-                    "Pizzas: $pizzasPedidas | " +
+                    "Productos: $pizzasPedidas | " +
                     "Total: ${formatearCLP(totales.totalFinal)} | " +
                     "Estado: ${pedido.estado.etiqueta}"
         )

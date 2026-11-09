@@ -1,7 +1,12 @@
 package utils
 
 private val formatoTelefonoChile = Regex("9[0-9]{8}")
-private val formatoEmail = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+private val formatoEmail = Regex(
+    "^[A-Za-z0-9_%+-]+(?:\\.[A-Za-z0-9_%+-]+)*@" +
+            "[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?" +
+            "(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*" +
+            "\\.[A-Za-z]{2,}$"
+)
 
 // telefono: solo dígitos y formato seleccionado
 fun validarTelefono(entrada: String): String? {

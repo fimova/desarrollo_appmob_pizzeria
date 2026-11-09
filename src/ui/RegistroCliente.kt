@@ -67,13 +67,8 @@ fun registrarCliente(clientesRegistrados: MutableSet<Cliente>): Cliente? {
 
     val nuevoCliente = Cliente(nombre, telefono, email, direccion)
 
-    // también usa equals() y hashCode() para evitar duplicados
-    if (!clientesRegistrados.add(nuevoCliente)) {
-        val clienteRegistrado = clientesRegistrados.first { it == nuevoCliente }
-        println("El cliente ya está registrado. Se usarán sus datos guardados.")
-        return clienteRegistrado
-    }
-
+    // usa equals() y hashCode() al agregar al cliente
+    clientesRegistrados.add(nuevoCliente)
     println("Cliente registrado.")
     return nuevoCliente
 }

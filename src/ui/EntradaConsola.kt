@@ -1,6 +1,6 @@
 package ui
 
-// cantidad de ingredientes positivos
+// lee cantidad de productos entre 1 y 100
 fun leerCantidadPositiva(mensaje: String): Int? {
     while (true) {
         print(mensaje)
@@ -15,7 +15,7 @@ fun leerCantidadPositiva(mensaje: String): Int? {
 
             println("Error: ingresa una cantidad entre 1 y 100.")
         } catch (error: NumberFormatException) {
-            println("Error: debes ingresar un número entero.")
+            println("Error: ingresa un número entero entre 1 y 100.")
         }
     }
 }

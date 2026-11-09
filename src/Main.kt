@@ -77,11 +77,9 @@ fun main() {
             break@pedidoLoop
         }
 
-        val notas = if (notasEntrada.trim().isBlank()) {
-            null
-        } else {
-            notasEntrada.trim()
-        }
+        val notas = notasEntrada
+            .takeIf { it.isNotBlank() }
+            ?.trim()
 
         print("Zona (Centro/Norte/Sur) o 'Sucursal central' para retirar: ")
 
@@ -128,14 +126,13 @@ fun main() {
             break@pedidoLoop
         }
 
-        val cantidadLeida = leerCantidadPositiva(
+        val cantidad = leerCantidadPositiva(
             "¿Cuántas pizzas ${productoSeleccionado.nombre} desea? "
         )
-        if (cantidadLeida == null) {
+        if (cantidad == null) {
             break@pedidoLoop
         }
 
-        val cantidad = cantidadLeida
         val items = listOf(ItemPedido(productoSeleccionado, cantidad))
 
         val pedido = Pedido(
@@ -145,9 +142,6 @@ fun main() {
             notas = notas,
             promocion = PromocionesDemo.promocionActual
         )
-
-        // indica si hay productos con promoción en el pedido
-        imprimirPromocionablesDelPedido(pedido)
 
         // verificar inventario con when y map
         // esta función se llama una sola vez porque también puede descontar el stock
@@ -161,6 +155,9 @@ fun main() {
             println("Inventario actual:")
             imprimirInventario(inventario)
         } else {
+            // indica si hay productos con promoción en el pedido
+            imprimirPromocionablesDelPedido(pedido)
+
             // 1. asignar repartidor
             // 2. transición estado: preparación -> listo
             val cambioAListo = pedido.cambiarEstado(EstadoPedido.LISTO)

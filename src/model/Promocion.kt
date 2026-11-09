@@ -2,7 +2,7 @@ package model
 
 import java.time.LocalDate
 
-class Promocion(
+data class Promocion(
     val nombre: String,
     val fechaInicio: LocalDate,
     val fechaFin: LocalDate

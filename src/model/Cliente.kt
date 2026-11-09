@@ -1,7 +1,5 @@
 package model
 
-import kotlin.hashCode
-
 class Cliente(
     nombre: String,
     telefono: String,
